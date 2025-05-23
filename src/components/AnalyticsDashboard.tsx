@@ -128,8 +128,8 @@ const AnalyticsDashboard = () => {
                 <XAxis dataKey="month" />
                 <YAxis />
                 <Tooltip 
-                  formatter={(value, name) => [
-                    name === 'transactions' ? value : `$${(value / 1000000).toFixed(1)}M`,
+                  formatter={(value: any, name: string) => [
+                    name === 'transactions' ? value : `$${(Number(value) / 1000000).toFixed(1)}M`,
                     name === 'transactions' ? 'Transactions' : 'Total Value'
                   ]}
                 />
@@ -151,7 +151,7 @@ const AnalyticsDashboard = () => {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="week" />
                 <YAxis />
-                <Tooltip formatter={(value) => [`${value}%`, 'Completion Rate']} />
+                <Tooltip formatter={(value: any) => [`${value}%`, 'Completion Rate']} />
                 <Line type="monotone" dataKey="completed" stroke="#10B981" strokeWidth={3} />
               </LineChart>
             </ResponsiveContainer>
