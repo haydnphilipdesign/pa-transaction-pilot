@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -27,7 +26,8 @@ interface GoogleCalendarSyncProps {
 }
 
 const GoogleCalendarSync = ({ tasks, transactions }: GoogleCalendarSyncProps) => {
-  const [isConnected, setIsConnected] = useState(false);
+  const [googleConnected, setGoogleConnected] = useState(false);
+  const [outlookConnected, setOutlookConnected] = useState(false);
   const [syncSettings, setSyncSettings] = useState({
     autoSync: true,
     syncTasks: true,
@@ -46,14 +46,14 @@ const GoogleCalendarSync = ({ tasks, transactions }: GoogleCalendarSyncProps) =>
     // Simulate Google OAuth flow
     try {
       await new Promise(resolve => setTimeout(resolve, 2000));
-      setIsConnected(true);
+      setGoogleConnected(true);
       toast({
         title: "Connected to Google Calendar",
-        description: "Your calendar is now synced with your transaction deadlines.",
+        description: "Your Google Calendar is now synced with your transaction deadlines.",
       });
     } catch (error) {
       toast({
-        title: "Connection Failed",
+        title: "Google Connection Failed",
         description: "Unable to connect to Google Calendar. Please try again.",
         variant: "destructive",
       });
@@ -62,28 +62,62 @@ const GoogleCalendarSync = ({ tasks, transactions }: GoogleCalendarSyncProps) =>
     }
   };
 
-  const handleDisconnect = () => {
-    setIsConnected(false);
+  const handleOutlookConnect = async () => {
+    setIsLoading(true);
+    
+    // Simulate Microsoft OAuth flow
+    try {
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      setOutlookConnected(true);
+      toast({
+        title: "Connected to Outlook Calendar",
+        description: "Your Outlook Calendar is now synced with your transaction deadlines.",
+      });
+    } catch (error) {
+      toast({
+        title: "Outlook Connection Failed",
+        description: "Unable to connect to Outlook Calendar. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleDisconnect = () => {
+    setGoogleConnected(false);
     toast({
-      title: "Disconnected",
+      title: "Google Calendar Disconnected",
       description: "Google Calendar sync has been disabled.",
     });
   };
 
+  const handleOutlookDisconnect = () => {
+    setOutlookConnected(false);
+    toast({
+      title: "Outlook Calendar Disconnected",
+      description: "Outlook Calendar sync has been disabled.",
+    });
+  };
+
   const handleSyncNow = async () => {
-    if (!isConnected) return;
+    if (!googleConnected && !outlookConnected) return;
     
     setIsLoading(true);
     try {
       await new Promise(resolve => setTimeout(resolve, 1500));
+      const connectedServices = [];
+      if (googleConnected) connectedServices.push("Google Calendar");
+      if (outlookConnected) connectedServices.push("Outlook Calendar");
+      
       toast({
         title: "Sync Complete",
-        description: `Synced ${tasks.length} tasks and ${transactions.length} transactions to your calendar.`,
+        description: `Synced ${tasks.length} tasks and ${transactions.length} transactions to ${connectedServices.join(" and ")}.`,
       });
     } catch (error) {
       toast({
         title: "Sync Failed",
-        description: "Unable to sync with Google Calendar. Please try again.",
+        description: "Unable to sync with calendar services. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -163,10 +197,16 @@ END:VCALENDAR`;
           </p>
         </div>
         <div className="flex items-center space-x-2">
-          {isConnected && (
+          {googleConnected && (
             <Badge variant="secondary" className="bg-green-100 text-green-800">
               <CheckCircle className="h-3 w-3 mr-1" />
-              Connected
+              Google Connected
+            </Badge>
+          )}
+          {outlookConnected && (
+            <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+              <CheckCircle className="h-3 w-3 mr-1" />
+              Outlook Connected
             </Badge>
           )}
         </div>
@@ -177,7 +217,7 @@ END:VCALENDAR`;
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center">
-              <CalendarIcon className="h-5 w-5 mr-2" />
+              <CalendarIcon className="h-5 w-5 mr-2 text-red-600" />
               Google Calendar
             </CardTitle>
             <CardDescription>
@@ -185,7 +225,7 @@ END:VCALENDAR`;
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {!isConnected ? (
+            {!googleConnected ? (
               <div className="text-center py-6">
                 <CalendarIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <p className="text-muted-foreground mb-4">
@@ -207,137 +247,193 @@ END:VCALENDAR`;
                     <CheckCircle className="h-5 w-5 text-green-600 mr-2" />
                     <span className="text-sm font-medium">Connected to Google Calendar</span>
                   </div>
-                  <Button variant="outline" size="sm" onClick={handleDisconnect}>
+                  <Button variant="outline" size="sm" onClick={handleGoogleDisconnect}>
                     Disconnect
                   </Button>
                 </div>
-
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="auto-sync" className="text-sm font-medium">
-                      Automatic Sync
-                    </Label>
-                    <Switch
-                      id="auto-sync"
-                      checked={syncSettings.autoSync}
-                      onCheckedChange={(checked) => 
-                        setSyncSettings(prev => ({ ...prev, autoSync: checked }))
-                      }
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="sync-tasks" className="text-sm font-medium">
-                      Sync Task Deadlines
-                    </Label>
-                    <Switch
-                      id="sync-tasks"
-                      checked={syncSettings.syncTasks}
-                      onCheckedChange={(checked) => 
-                        setSyncSettings(prev => ({ ...prev, syncTasks: checked }))
-                      }
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="sync-closings" className="text-sm font-medium">
-                      Sync Closing Dates
-                    </Label>
-                    <Switch
-                      id="sync-closings"
-                      checked={syncSettings.syncClosings}
-                      onCheckedChange={(checked) => 
-                        setSyncSettings(prev => ({ ...prev, syncClosings: checked }))
-                      }
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium">
-                      Reminder Time (minutes before)
-                    </Label>
-                    <Input
-                      type="number"
-                      value={syncSettings.reminderMinutes}
-                      onChange={(e) => 
-                        setSyncSettings(prev => ({ 
-                          ...prev, 
-                          reminderMinutes: parseInt(e.target.value) || 60 
-                        }))
-                      }
-                      min="0"
-                      max="1440"
-                    />
-                  </div>
-                </div>
-
-                <Button onClick={handleSyncNow} disabled={isLoading} className="w-full">
-                  {isLoading ? (
-                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <Upload className="h-4 w-4 mr-2" />
-                  )}
-                  Sync Now
-                </Button>
               </div>
             )}
           </CardContent>
         </Card>
 
-        {/* Manual Export Options */}
+        {/* Outlook Calendar Integration */}
         <Card>
           <CardHeader>
-            <CardTitle>Manual Export</CardTitle>
+            <CardTitle className="flex items-center">
+              <CalendarIcon className="h-5 w-5 mr-2 text-blue-600" />
+              Outlook Calendar
+            </CardTitle>
             <CardDescription>
-              Export your deadlines to other calendar applications
+              Two-way sync with your Office 365/Outlook account
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {!outlookConnected ? (
+              <div className="text-center py-6">
+                <CalendarIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground mb-4">
+                  Connect your Outlook Calendar to automatically sync transaction deadlines
+                </p>
+                <Button onClick={handleOutlookConnect} disabled={isLoading} className="bg-blue-600 hover:bg-blue-700">
+                  {isLoading ? (
+                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Link className="h-4 w-4 mr-2" />
+                  )}
+                  Connect Outlook Calendar
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-center">
+                    <CheckCircle className="h-5 w-5 text-blue-600 mr-2" />
+                    <span className="text-sm font-medium">Connected to Outlook Calendar</span>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={handleOutlookDisconnect}>
+                    Disconnect
+                  </Button>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Sync Settings */}
+      {(googleConnected || outlookConnected) && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Sync Settings</CardTitle>
+            <CardDescription>
+              Configure what gets synced to your calendar services
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-3">
-              <div>
-                <Label className="text-sm font-medium mb-2 block">
-                  Calendar Feed URL (WebCal)
+              <div className="flex items-center justify-between">
+                <Label htmlFor="auto-sync" className="text-sm font-medium">
+                  Automatic Sync
                 </Label>
-                <div className="flex space-x-2">
-                  <Input 
-                    value={webcalUrl} 
-                    readOnly 
-                    className="font-mono text-xs"
-                  />
-                  <Button variant="outline" size="icon" onClick={copyWebcalUrl}>
-                    <Copy className="h-4 w-4" />
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Use this URL to subscribe to your deadlines in any calendar app
-                </p>
+                <Switch
+                  id="auto-sync"
+                  checked={syncSettings.autoSync}
+                  onCheckedChange={(checked) => 
+                    setSyncSettings(prev => ({ ...prev, autoSync: checked }))
+                  }
+                />
               </div>
 
-              <div>
-                <Button onClick={generateICalFile} className="w-full">
-                  <Download className="h-4 w-4 mr-2" />
-                  Download .ics File
-                </Button>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Download a one-time export of all current deadlines
-                </p>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="sync-tasks" className="text-sm font-medium">
+                  Sync Task Deadlines
+                </Label>
+                <Switch
+                  id="sync-tasks"
+                  checked={syncSettings.syncTasks}
+                  onCheckedChange={(checked) => 
+                    setSyncSettings(prev => ({ ...prev, syncTasks: checked }))
+                  }
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <Label htmlFor="sync-closings" className="text-sm font-medium">
+                  Sync Closing Dates
+                </Label>
+                <Switch
+                  id="sync-closings"
+                  checked={syncSettings.syncClosings}
+                  onCheckedChange={(checked) => 
+                    setSyncSettings(prev => ({ ...prev, syncClosings: checked }))
+                  }
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">
+                  Reminder Time (minutes before)
+                </Label>
+                <Input
+                  type="number"
+                  value={syncSettings.reminderMinutes}
+                  onChange={(e) => 
+                    setSyncSettings(prev => ({ 
+                      ...prev, 
+                      reminderMinutes: parseInt(e.target.value) || 60 
+                    }))
+                  }
+                  min="0"
+                  max="1440"
+                />
               </div>
             </div>
 
-            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-              <div className="flex items-start">
-                <AlertCircle className="h-4 w-4 text-blue-600 mr-2 mt-0.5" />
-                <div className="text-sm">
-                  <p className="font-medium text-blue-800">Import Instructions:</p>
-                  <p className="text-blue-700">
-                    Copy the WebCal URL and paste it into your calendar app's "Add Calendar" or "Subscribe" feature.
-                  </p>
-                </div>
-              </div>
-            </div>
+            <Button onClick={handleSyncNow} disabled={isLoading} className="w-full">
+              {isLoading ? (
+                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Upload className="h-4 w-4 mr-2" />
+              )}
+              Sync Now
+            </Button>
           </CardContent>
         </Card>
-      </div>
+      )}
+
+      {/* Manual Export Options */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Manual Export</CardTitle>
+          <CardDescription>
+            Export your deadlines to other calendar applications
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-3">
+            <div>
+              <Label className="text-sm font-medium mb-2 block">
+                Calendar Feed URL (WebCal)
+              </Label>
+              <div className="flex space-x-2">
+                <Input 
+                  value={webcalUrl} 
+                  readOnly 
+                  className="font-mono text-xs"
+                />
+                <Button variant="outline" size="icon" onClick={copyWebcalUrl}>
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Use this URL to subscribe to your deadlines in any calendar app
+              </p>
+            </div>
+
+            <div>
+              <Button onClick={generateICalFile} className="w-full">
+                <Download className="h-4 w-4 mr-2" />
+                Download .ics File
+              </Button>
+              <p className="text-xs text-muted-foreground mt-1">
+                Download a one-time export of all current deadlines
+              </p>
+            </div>
+          </div>
+
+          <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="flex items-start">
+              <AlertCircle className="h-4 w-4 text-blue-600 mr-2 mt-0.5" />
+              <div className="text-sm">
+                <p className="font-medium text-blue-800">Import Instructions:</p>
+                <p className="text-blue-700">
+                  Copy the WebCal URL and paste it into your calendar app's "Add Calendar" or "Subscribe" feature.
+                </p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Sync Status */}
       <Card>

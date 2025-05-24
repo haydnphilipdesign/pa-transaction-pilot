@@ -178,7 +178,7 @@ const TransactionManager = () => {
           </TabsTrigger>
           <TabsTrigger value="settings" className="flex items-center space-x-2">
             <Settings className="h-4 w-4" />
-            <span>Calendar Sync</span>
+            <span>Integrations</span>
           </TabsTrigger>
         </TabsList>
 
