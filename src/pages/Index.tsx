@@ -1,11 +1,10 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Clock, FileText, Users, TrendingUp, CheckCircle } from "lucide-react";
 import AuthModal from "@/components/AuthModal";
-import TransactionPipeline from "@/components/TransactionPipeline";
+import TransactionManager from "@/components/TransactionManager";
 import TaskManagement from "@/components/TaskManagement";
 import AnalyticsDashboard from "@/components/AnalyticsDashboard";
 import RoleBasedDashboard from "@/components/RoleBasedDashboard";
@@ -120,7 +119,7 @@ const Index = () => {
 
       <main className="container mx-auto px-4 py-8">
         {activeTab === "dashboard" && <RoleBasedDashboard />}
-        {activeTab === "pipeline" && <TransactionPipeline />}
+        {activeTab === "pipeline" && <TransactionManager />}
         {activeTab === "tasks" && <TaskManagement />}
         {activeTab === "analytics" && user?.role === 'admin' && <AnalyticsDashboard />}
       </main>
